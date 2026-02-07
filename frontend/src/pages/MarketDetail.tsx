@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useWallet } from '../hooks/useWallet'
 import { useContract, type Market, type Position } from '../hooks/useContract'
 import { stroopsToXlm, xlmToStroops } from '../lib/stellar'
@@ -78,12 +78,19 @@ export function MarketDetail() {
   }
 
   if (loading) {
-    return <div className="text-center py-16 text-gray-400">Loading...</div>
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   if (!market) {
     return (
-      <div className="text-center py-16 text-red-400">Market not found</div>
+      <div className="text-center py-24">
+        <p className="text-no-red text-lg mb-3">Market not found</p>
+        <Link to="/" className="text-accent text-sm hover:underline">Back to markets</Link>
+      </div>
     )
   }
 
@@ -96,7 +103,6 @@ export function MarketDetail() {
   const isExpired = Date.now() > deadlineDate.getTime()
   const canBuy = isOpen && !isExpired
 
-  // Calculate potential payout
   const potentialPayout = (side: 'Yes' | 'No') => {
     if (!position) return '0'
     const shares = side === 'Yes' ? position.yes_shares : position.no_shares
@@ -106,68 +112,98 @@ export function MarketDetail() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm mb-8">
+        <Link to="/" className="text-text-dim hover:text-white transition-colors no-underline">Markets</Link>
+        <span className="text-text-dim">/</span>
+        <span className="text-text-secondary">Market #{marketId}</span>
+      </div>
+
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-start justify-between mb-2">
-          <h1 className="text-2xl font-bold">{market.question}</h1>
+      <div className="bg-surface border border-border rounded-2xl p-7 mb-5">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <h1 className="text-2xl font-bold leading-snug">{market.question}</h1>
           <span
-            className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
+            className={`shrink-0 inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full ${
               isResolved
-                ? 'bg-blue-500/20 text-blue-400'
+                ? 'bg-stellar-blue/15 text-stellar-purple'
                 : isExpired
-                  ? 'bg-yellow-500/20 text-yellow-400'
-                  : 'bg-green-500/20 text-green-400'
+                  ? 'bg-accent/10 text-accent'
+                  : 'bg-yes-green-dim text-yes-green'
             }`}
           >
+            <span className={`w-2 h-2 rounded-full ${
+              isResolved ? 'bg-stellar-purple' : isExpired ? 'bg-accent' : 'bg-yes-green'
+            }`} />
             {isResolved
               ? `Resolved: ${market.status.values?.[0] ?? ''}`
               : isExpired
                 ? 'Expired'
-                : 'Open'}
+                : 'Live'}
           </span>
         </div>
-        <p className="text-sm text-gray-400">
-          Deadline: {deadlineDate.toLocaleString()}
-        </p>
+        <div className="flex items-center gap-5 text-xs text-text-dim">
+          <span>Creator: {market.creator.slice(0, 6)}...{market.creator.slice(-4)}</span>
+          <span>Deadline: {deadlineDate.toLocaleString()}</span>
+        </div>
       </div>
 
-      {/* Probability */}
-      <div className="bg-surface border border-border rounded-xl p-5 mb-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-yes-green font-medium">Yes {yesPct}%</span>
-          <span className="text-no-red font-medium">No {noPct}%</span>
-        </div>
-        <div className="h-3 bg-surface-light rounded-full overflow-hidden flex mb-4">
-          <div className="bg-yes-green transition-all" style={{ width: `${yesPct}%` }} />
-          <div className="bg-no-red transition-all" style={{ width: `${noPct}%` }} />
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-center text-sm">
-          <div>
-            <div className="text-gray-400">Pool</div>
-            <div className="font-medium">{stroopsToXlm(market.pool_balance)} XLM</div>
+      {/* Probability + Stats */}
+      <div className="bg-surface border border-border rounded-2xl p-7 mb-5">
+        {/* Big YES/NO bars */}
+        <div className="space-y-3 mb-7">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 bg-black/60 rounded-xl overflow-hidden h-12 flex items-center relative">
+              <div
+                className="absolute inset-y-0 left-0 bg-yes-green/12 rounded-xl transition-all"
+                style={{ width: `${yesPct}%` }}
+              />
+              <span className="relative text-sm font-medium text-text-secondary pl-4">Yes</span>
+              <span className="relative ml-auto text-xl font-bold text-white pr-4">{yesPct}%</span>
+            </div>
           </div>
-          <div>
-            <div className="text-gray-400">Yes Volume</div>
-            <div className="font-medium text-yes-green">{stroopsToXlm(market.total_yes)} XLM</div>
+          <div className="flex items-center gap-4">
+            <div className="flex-1 bg-black/60 rounded-xl overflow-hidden h-12 flex items-center relative">
+              <div
+                className="absolute inset-y-0 left-0 bg-no-red/12 rounded-xl transition-all"
+                style={{ width: `${noPct}%` }}
+              />
+              <span className="relative text-sm font-medium text-text-secondary pl-4">No</span>
+              <span className="relative ml-auto text-xl font-bold text-white pr-4">{noPct}%</span>
+            </div>
           </div>
-          <div>
-            <div className="text-gray-400">No Volume</div>
-            <div className="font-medium text-no-red">{stroopsToXlm(market.total_no)} XLM</div>
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-black/40 rounded-xl p-4 text-center">
+            <div className="text-text-dim text-xs mb-1.5">Pool</div>
+            <div className="text-white font-bold text-lg">{stroopsToXlm(market.pool_balance)} XLM</div>
+          </div>
+          <div className="bg-black/40 rounded-xl p-4 text-center">
+            <div className="text-text-dim text-xs mb-1.5">Yes Volume</div>
+            <div className="text-yes-green font-bold text-lg">{stroopsToXlm(market.total_yes)} XLM</div>
+          </div>
+          <div className="bg-black/40 rounded-xl p-4 text-center">
+            <div className="text-text-dim text-xs mb-1.5">No Volume</div>
+            <div className="text-no-red font-bold text-lg">{stroopsToXlm(market.total_no)} XLM</div>
           </div>
         </div>
       </div>
 
       {/* Buy Section */}
       {canBuy && (
-        <div className="bg-surface border border-border rounded-xl p-5 mb-6">
-          <h2 className="font-medium mb-4">Place a Bet</h2>
+        <div className="bg-surface border border-border rounded-2xl p-7 mb-5">
+          <h2 className="text-white font-bold text-lg mb-5">Place a Bet</h2>
           {!connected ? (
-            <p className="text-gray-400 text-sm">Connect your wallet to place bets.</p>
+            <div className="bg-accent/5 border border-accent/20 rounded-xl p-5 text-accent text-sm text-center">
+              Connect your wallet to place bets
+            </div>
           ) : (
             <div>
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Amount (XLM)</label>
+              <div className="mb-5">
+                <label className="block text-xs text-text-dim mb-2.5 uppercase tracking-wider font-medium">Amount (XLM)</label>
                 <input
                   type="number"
                   value={amount}
@@ -175,23 +211,23 @@ export function MarketDetail() {
                   placeholder="10"
                   min="0.0000001"
                   step="any"
-                  className="w-full bg-surface-light border border-border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-stellar-blue"
+                  className="w-full bg-black/60 border border-border-light rounded-xl px-5 py-3.5 text-white text-lg placeholder-text-dim focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => handleBuy('Yes')}
                   disabled={submitting || !amount}
-                  className="bg-yes-green/20 hover:bg-yes-green/30 text-yes-green border border-yes-green/30 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  className="bg-yes-green-dim hover:bg-yes-green/25 text-yes-green border border-yes-green/20 py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-40"
                 >
-                  {submitting ? '...' : 'Buy Yes'}
+                  {submitting ? 'Processing...' : 'Buy YES'}
                 </button>
                 <button
                   onClick={() => handleBuy('No')}
                   disabled={submitting || !amount}
-                  className="bg-no-red/20 hover:bg-no-red/30 text-no-red border border-no-red/30 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  className="bg-no-red-dim hover:bg-no-red/25 text-no-red border border-no-red/20 py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-40"
                 >
-                  {submitting ? '...' : 'Buy No'}
+                  {submitting ? 'Processing...' : 'Buy NO'}
                 </button>
               </div>
             </div>
@@ -201,27 +237,27 @@ export function MarketDetail() {
 
       {/* Position */}
       {position && (position.yes_shares > 0n || position.no_shares > 0n) && (
-        <div className="bg-surface border border-border rounded-xl p-5 mb-6">
-          <h2 className="font-medium mb-4">Your Position</h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-surface-light rounded-lg p-3">
-              <div className="text-sm text-gray-400">Yes Shares</div>
-              <div className="font-medium text-yes-green">
+        <div className="bg-surface border border-border rounded-2xl p-7 mb-5">
+          <h2 className="text-white font-bold text-lg mb-5">Your Position</h2>
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div className="bg-black/40 rounded-xl p-5 border border-yes-green/10">
+              <div className="text-xs text-text-dim mb-2">Yes Shares</div>
+              <div className="text-yes-green font-bold text-xl">
                 {stroopsToXlm(position.yes_shares)} XLM
               </div>
               {isResolved && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-text-dim mt-2">
                   Payout: {potentialPayout('Yes')} XLM
                 </div>
               )}
             </div>
-            <div className="bg-surface-light rounded-lg p-3">
-              <div className="text-sm text-gray-400">No Shares</div>
-              <div className="font-medium text-no-red">
+            <div className="bg-black/40 rounded-xl p-5 border border-no-red/10">
+              <div className="text-xs text-text-dim mb-2">No Shares</div>
+              <div className="text-no-red font-bold text-xl">
                 {stroopsToXlm(position.no_shares)} XLM
               </div>
               {isResolved && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-text-dim mt-2">
                   Payout: {potentialPayout('No')} XLM
                 </div>
               )}
@@ -232,15 +268,15 @@ export function MarketDetail() {
             <button
               onClick={handleClaim}
               disabled={submitting}
-              className="w-full bg-stellar-blue hover:bg-stellar-purple text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full bg-accent hover:bg-accent-hover text-black py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-50"
             >
               {submitting ? 'Claiming...' : 'Claim Winnings'}
             </button>
           )}
           {position.claimed && (
-            <p className="text-center text-sm text-gray-400">
-              Winnings already claimed.
-            </p>
+            <div className="text-center text-sm text-text-dim bg-black/40 rounded-xl py-4">
+              Winnings already claimed
+            </div>
           )}
         </div>
       )}

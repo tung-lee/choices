@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useWallet } from '../hooks/useWallet'
 import { useContract, type Market } from '../hooks/useContract'
 import { stroopsToXlm } from '../lib/stellar'
@@ -43,7 +44,6 @@ export function Admin() {
       toast.loading(`Resolving as ${outcome}...`, { id: 'resolve' })
       await resolveMarket(marketId, outcome)
       toast.success('Market resolved!', { id: 'resolve' })
-      // Reload
       const updated = await getMarket(marketId)
       setMarkets((prev) =>
         prev.map((m) => (m.id === marketId ? { ...m, data: updated } : m)),
@@ -57,10 +57,6 @@ export function Admin() {
     }
   }
 
-  if (loading) {
-    return <div className="text-center py-16 text-gray-400">Loading...</div>
-  }
-
   const resolvableMarkets = markets.filter(({ data }) => {
     const isOpen = data.status.tag === 'Open'
     const isExpired = Date.now() > data.deadline * 1000
@@ -71,53 +67,74 @@ export function Admin() {
     ({ data }) => data.status.tag === 'Resolved',
   )
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
+    <div className="max-w-3xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm mb-8">
+        <Link to="/" className="text-text-dim hover:text-white transition-colors no-underline">Markets</Link>
+        <span className="text-text-dim">/</span>
+        <span className="text-text-secondary">Admin</span>
+      </div>
+
+      <div className="flex items-center gap-4 mb-8">
+        <h1 className="text-2xl font-bold">Admin Panel</h1>
+        {!connected && (
+          <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-full font-medium">
+            Wallet not connected
+          </span>
+        )}
+      </div>
 
       {!connected && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6 text-yellow-400 text-sm">
-          Connect the admin wallet to resolve markets.
+        <div className="bg-accent/5 border border-accent/20 rounded-xl p-5 mb-8 text-accent text-sm text-center">
+          Connect the admin wallet to resolve markets
         </div>
       )}
 
-      {/* Resolvable Markets */}
-      <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4 text-gray-300">
+      {/* Awaiting Resolution */}
+      <section className="mb-10">
+        <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-5">
           Awaiting Resolution ({resolvableMarkets.length})
         </h2>
         {resolvableMarkets.length === 0 ? (
-          <p className="text-gray-500 text-sm">No markets to resolve.</p>
+          <div className="bg-surface border border-border rounded-2xl p-8 text-center text-text-dim text-sm">
+            No markets to resolve
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {resolvableMarkets.map(({ id, data }) => (
               <div
                 key={id}
-                className="bg-surface border border-border rounded-xl p-4"
+                className="bg-surface border border-border rounded-2xl p-6"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium">{data.question}</h3>
-                    <p className="text-sm text-gray-400">
-                      Pool: {stroopsToXlm(data.pool_balance)} XLM | Ended:{' '}
-                      {new Date(data.deadline * 1000).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div className="mb-4">
+                  <h3 className="text-white font-semibold mb-2">{data.question}</h3>
+                  <p className="text-xs text-text-dim">
+                    Pool: {stroopsToXlm(data.pool_balance)} XLM &middot; Ended: {new Date(data.deadline * 1000).toLocaleDateString()}
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleResolve(id, 'Yes')}
                     disabled={resolving === id}
-                    className="bg-yes-green/20 hover:bg-yes-green/30 text-yes-green border border-yes-green/30 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="bg-yes-green-dim hover:bg-yes-green/25 text-yes-green border border-yes-green/20 py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-40"
                   >
-                    {resolving === id ? '...' : 'Resolve YES'}
+                    {resolving === id ? 'Resolving...' : 'Resolve YES'}
                   </button>
                   <button
                     onClick={() => handleResolve(id, 'No')}
                     disabled={resolving === id}
-                    className="bg-no-red/20 hover:bg-no-red/30 text-no-red border border-no-red/30 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="bg-no-red-dim hover:bg-no-red/25 text-no-red border border-no-red/20 py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-40"
                   >
-                    {resolving === id ? '...' : 'Resolve NO'}
+                    {resolving === id ? 'Resolving...' : 'Resolve NO'}
                   </button>
                 </div>
               </div>
@@ -126,24 +143,25 @@ export function Admin() {
         )}
       </section>
 
-      {/* Resolved Markets */}
+      {/* Resolved */}
       <section>
-        <h2 className="text-lg font-medium mb-4 text-gray-300">
-          Resolved Markets ({resolvedMarkets.length})
+        <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-5">
+          Resolved ({resolvedMarkets.length})
         </h2>
         {resolvedMarkets.length === 0 ? (
-          <p className="text-gray-500 text-sm">No resolved markets yet.</p>
+          <div className="bg-surface border border-border rounded-2xl p-8 text-center text-text-dim text-sm">
+            No resolved markets yet
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {resolvedMarkets.map(({ id, data }) => (
               <div
                 key={id}
-                className="bg-surface border border-border rounded-xl p-4 opacity-70"
+                className="bg-surface border border-border rounded-2xl p-6 opacity-70"
               >
-                <h3 className="font-medium">{data.question}</h3>
-                <p className="text-sm text-gray-400">
-                  Outcome: {String(data.status.values?.[0] ?? 'Unknown')} | Pool:{' '}
-                  {stroopsToXlm(data.pool_balance)} XLM
+                <h3 className="text-white font-semibold mb-2">{data.question}</h3>
+                <p className="text-xs text-text-dim">
+                  Outcome: <span className="text-accent">{String(data.status.values?.[0] ?? 'Unknown')}</span> &middot; Pool: {stroopsToXlm(data.pool_balance)} XLM
                 </p>
               </div>
             ))}

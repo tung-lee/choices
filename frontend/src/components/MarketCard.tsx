@@ -18,53 +18,87 @@ export function MarketCard({ market, marketId }: Props) {
   const isResolved = market.status.tag === 'Resolved'
   const deadlineDate = new Date(market.deadline * 1000)
   const isExpired = Date.now() > deadlineDate.getTime()
+  const pool = stroopsToXlm(market.pool_balance)
 
   return (
     <Link
       to={`/market/${marketId}`}
-      className="block bg-surface border border-border rounded-xl p-5 hover:border-stellar-blue/50 transition-colors no-underline"
+      className="block bg-surface hover:bg-surface-hover border border-border hover:border-border-light rounded-2xl p-6 transition-all no-underline group"
     >
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="text-white font-medium text-lg leading-snug pr-4">
-          {market.question}
-        </h3>
+      {/* Question */}
+      <h3 className="text-white font-semibold text-[15px] leading-relaxed mb-5 group-hover:text-accent-hover transition-colors line-clamp-2 min-h-[3rem]">
+        {market.question}
+      </h3>
+
+      {/* Options with YES/NO pills */}
+      <div className="space-y-2.5 mb-5">
+        {/* YES option */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-black/60 rounded-lg overflow-hidden h-9 flex items-center relative">
+            <div
+              className="absolute inset-y-0 left-0 bg-yes-green/12 rounded-lg"
+              style={{ width: `${yesPct}%` }}
+            />
+            <span className="relative text-sm text-text-secondary pl-3 font-medium">
+              Yes
+            </span>
+            <span className="relative ml-auto text-sm font-bold text-white pr-3">
+              {yesPct}%
+            </span>
+          </div>
+          <span className="shrink-0 bg-yes-green-dim text-yes-green text-xs font-bold px-3.5 py-1.5 rounded-lg">
+            YES
+          </span>
+        </div>
+
+        {/* NO option */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-black/60 rounded-lg overflow-hidden h-9 flex items-center relative">
+            <div
+              className="absolute inset-y-0 left-0 bg-no-red/12 rounded-lg"
+              style={{ width: `${noPct}%` }}
+            />
+            <span className="relative text-sm text-text-secondary pl-3 font-medium">
+              No
+            </span>
+            <span className="relative ml-auto text-sm font-bold text-white pr-3">
+              {noPct}%
+            </span>
+          </div>
+          <span className="shrink-0 bg-no-red-dim text-no-red text-xs font-bold px-3.5 py-1.5 rounded-lg">
+            NO
+          </span>
+        </div>
+      </div>
+
+      {/* Footer: status + volume + deadline */}
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <span
-          className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
+          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
             isResolved
-              ? 'bg-blue-500/20 text-blue-400'
+              ? 'bg-stellar-blue/15 text-stellar-purple'
               : isExpired
-                ? 'bg-yellow-500/20 text-yellow-400'
-                : 'bg-green-500/20 text-green-400'
+                ? 'bg-accent/10 text-accent'
+                : 'bg-yes-green-dim text-yes-green'
           }`}
         >
-          {isResolved ? `Resolved: ${market.status.values?.[0] ?? ''}` : isExpired ? 'Expired' : 'Open'}
+          <span className={`w-1.5 h-1.5 rounded-full ${
+            isResolved ? 'bg-stellar-purple' : isExpired ? 'bg-accent' : 'bg-yes-green'
+          }`} />
+          {isResolved
+            ? `${market.status.values?.[0] ?? 'Resolved'}`
+            : isExpired
+              ? 'Expired'
+              : 'Live'}
         </span>
-      </div>
-
-      {/* Probability bar */}
-      <div className="mb-3">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-yes-green">Yes {yesPct}%</span>
-          <span className="text-no-red">No {noPct}%</span>
+        <div className="flex items-center gap-3 text-xs text-text-dim">
+          {Number(pool) > 0 && (
+            <span>
+              Vol: <span className="text-text-secondary">{pool} XLM</span>
+            </span>
+          )}
+          <span>{deadlineDate.toLocaleDateString()}</span>
         </div>
-        <div className="h-2 bg-surface-light rounded-full overflow-hidden flex">
-          <div
-            className="bg-yes-green transition-all"
-            style={{ width: `${yesPct}%` }}
-          />
-          <div
-            className="bg-no-red transition-all"
-            style={{ width: `${noPct}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between text-sm text-gray-400">
-        <span>Pool: {stroopsToXlm(market.pool_balance)} XLM</span>
-        <span>
-          {isExpired ? 'Ended' : 'Ends'}{' '}
-          {deadlineDate.toLocaleDateString()}
-        </span>
       </div>
     </Link>
   )
