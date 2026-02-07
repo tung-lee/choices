@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-stellar-blue: #3e1bdb;
+  --color-stellar-purple: #7c3aed;
+  --color-yes-green: #22c55e;
+  --color-no-red: #ef4444;
+  --color-surface: #1e1e2e;
+  --color-surface-light: #2a2a3e;
+  --color-border: #3a3a4e;
+}

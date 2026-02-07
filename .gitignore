@@ -1,0 +1,25 @@
+# Rust
+target/
+Cargo.lock
+
+# Node
+node_modules/
+dist/
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Stellar
+.soroban/
+
+# Claude
+CLAUDE.md
+.claude/
+plans/
