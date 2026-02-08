@@ -6,6 +6,7 @@ const navLinks = [
   { to: '/', label: 'Markets' },
   { to: '/create', label: 'Create' },
   { to: '/admin', label: 'Admin' },
+  { to: '/faucet', label: 'Faucet' },
 ]
 
 export function Layout() {
@@ -22,10 +23,10 @@ export function Layout() {
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2.5 no-underline shrink-0">
               <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
-                <span className="text-black font-bold text-sm">SP</span>
+                <span className="text-black font-bold text-sm">C</span>
               </div>
               <span className="text-white font-bold text-lg hidden sm:block">
-                Stellar Predictions
+                Choices
               </span>
             </Link>
 

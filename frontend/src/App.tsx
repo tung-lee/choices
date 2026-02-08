@@ -6,6 +6,7 @@ import { Markets } from './pages/Markets'
 import { CreateMarket } from './pages/CreateMarket'
 import { MarketDetail } from './pages/MarketDetail'
 import { Admin } from './pages/Admin'
+import { Faucet } from './pages/Faucet'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/create" element={<CreateMarket />} />
             <Route path="/market/:id" element={<MarketDetail />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/faucet" element={<Faucet />} />
           </Route>
         </Routes>
       </BrowserRouter>
